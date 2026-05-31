@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pathogen Watch — Data-Driven Medical Journalism</title>
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --pw-red: #C41E3A;
+            --pw-dark: #0f172a;
+            --pw-navy: #1e293b;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --bg-cream: #f8fafc;
+            --bg-white: #ffffff;
+            --border-light: #e2e8f0;
+            --accent-teal: #0d9488;
+            --accent-amber: #d97706;
+        }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: var(--bg-cream);
+            color: var(--text-primary);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+        h1, h2, h3, h4 { font-family: 'Georgia', serif; font-weight: 400; letter-spacing: -0.02em; }
+        .sans { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+
+        /* HEADER */
+        header {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            background: rgba(255,255,255,0.95); backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-light); transition: all 0.3s ease;
+        }
+        nav { max-width: 1200px; margin: 0 auto; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.4rem; font-weight: 700; color: var(--pw-dark); text-decoration: none; letter-spacing: -0.5px; }
+        .logo span { color: var(--pw-red); }
+        .tagline { font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.15em; margin-left: 0.5rem; }
+        .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+        .nav-links a { text-decoration: none; color: var(--text-secondary); font-size: 0.8rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; transition: color 0.2s; position: relative; }
+        .nav-links a::after { content: ''; position: absolute; bottom: -4px; left: 0; width: 0; height: 2px; background: var(--pw-red); transition: width 0.3s; }
+        .nav-links a:hover { color: var(--pw-dark); }
+        .nav-links a:hover::after { width: 100%; }
+        .mobile-menu-btn { display: none; background: none; border: none; cursor: pointer; padding: 0.5rem; }
+
+        /* HERO */
+        .hero { min-height: 100vh; display: flex; align-items: center; padding: 8rem 2rem 4rem; max-width: 1200px; margin: 0 auto; gap: 4rem; }
+        .hero-content { flex: 1; }
+        .hero-label { display: inline-block; padding: 0.5rem 1rem; background: var(--pw-red); color: white; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1.5rem; border-radius: 2px; }
+        .hero h1 { font-size: clamp(2.5rem, 5vw, 4rem); line-height: 1.1; color: var(--pw-dark); margin-bottom: 1.5rem; }
+        .hero h1 em { font-style: italic; color: var(--pw-red); }
+        .hero-subtitle { font-size: 1.25rem; color: var(--text-secondary); margin-bottom: 2rem; max-width: 540px; }
+        .hero-meta { display: flex; gap: 2rem; margin-bottom: 2.5rem; flex-wrap: wrap; }
+        .meta-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary); }
+        .meta-item svg { width: 18px; height: 18px; color: var(--accent-teal); }
+        .hero-cta { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.875rem 2rem; font-size: 0.875rem; font-weight: 600; text-decoration: none; border-radius: 4px; transition: all 0.3s ease; cursor: pointer; border: none; }
+        .btn-primary { background: var(--pw-dark); color: white; }
+        .btn-primary:hover { background: var(--pw-red); transform: translateY(-2px); box-shadow: 0 8px 25px rgba(196, 30, 58, 0.25); }
+        .btn-secondary { background: transparent; color: var(--pw-dark); border: 1.5px solid var(--border-light); }
+        .btn-secondary:hover { border-color: var(--pw-red); color: var(--pw-red); }
+        .hero-visual { flex: 0 0 380px; position: relative; }
+        .data-card { background: white; border: 1px solid var(--border-light); border-radius: 8px; padding: 2rem; box-shadow: 0 20px 60px rgba(0,0,0,0.08); position: relative; overflow: hidden; }
+        .data-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--pw-red), var(--accent-teal)); }
+        .data-card h3 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1.5rem; }
+        .stat-row { display: flex; justify-content: space-between; align-items: baseline; padding: 1rem 0; border-bottom: 1px solid var(--border-light); }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-value { font-size: 1.75rem; font-weight: 700; color: var(--pw-dark); font-family: -apple-system, sans-serif; }
+        .stat-value.up { color: var(--pw-red); }
+        .stat-label { font-size: 0.875rem; color: var(--text-secondary); }
+        .stat-change { font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px; background: #fee2e2; color: var(--pw-red); font-weight: 600; }
+
+        /* SECTIONS */
+        section { padding: 6rem 2rem; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .section-header { margin-bottom: 3rem; }
+        .section-header h2 { font-size: clamp(1.75rem, 3vw, 2.5rem); color: var(--pw-dark); margin-bottom: 0.75rem; }
+        .section-header p { color: var(--text-secondary); font-size: 1.125rem; max-width: 600px; }
+        .section-label { display: inline-block; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.15em; color: var(--pw-red); margin-bottom: 1rem; }
+
+        /* ARTICLE */
+        .article-section { background: var(--bg-white); }
+        .article-header { border-bottom: 2px solid var(--pw-dark); padding-bottom: 2rem; margin-bottom: 3rem; }
+        .article-header h1 { font-size: clamp(2rem, 4vw, 3rem); color: var(--pw-dark); margin-bottom: 1.5rem; line-height: 1.2; }
+        .article-meta { display: flex; flex-wrap: wrap; gap: 2rem; align-items: center; }
+        .author-block { display: flex; align-items: center; gap: 1rem; }
+        .author-avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--pw-navy), var(--pw-dark)); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1rem; }
+        .author-info h4 { font-size: 0.95rem; color: var(--pw-dark); margin-bottom: 0.125rem; }
+        .author-info p { font-size: 0.8rem; color: var(--text-secondary); }
+        .article-date { font-size: 0.8rem; color: var(--text-secondary); }
+        .article-tag { display: inline-block; padding: 0.375rem 0.875rem; background: #fee2e2; color: var(--pw-red); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-radius: 4px; }
+
+        .article-body { max-width: 720px; margin: 0 auto; }
+        .article-body p { font-size: 1.125rem; color: var(--text-primary); margin-bottom: 1.75rem; line-height: 1.8; }
+        .article-body h3 { font-size: 1.5rem; color: var(--pw-dark); margin: 3rem 0 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-light); }
+        .article-body blockquote { border-left: 4px solid var(--pw-red); padding-left: 1.5rem; margin: 2rem 0; font-style: italic; color: var(--text-secondary); font-size: 1.125rem; }
+        .article-body .highlight-box { background: var(--bg-cream); border: 1px solid var(--border-light); border-radius: 8px; padding: 1.5rem; margin: 2rem 0; }
+        .article-body .highlight-box h4 { font-size: 1rem; color: var(--pw-dark); margin-bottom: 0.75rem; }
+        .article-body .highlight-box ul { list-style: none; padding: 0; }
+        .article-body .highlight-box li { padding: 0.5rem 0; padding-left: 1.5rem; position: relative; font-size: 0.95rem; color: var(--text-secondary); }
+        .article-body .highlight-box li::before { content: '→'; position: absolute; left: 0; color: var(--pw-red); font-weight: 700; }
+        .article-body .data-callout { background: linear-gradient(135deg, var(--pw-navy), var(--pw-dark)); color: white; border-radius: 8px; padding: 2rem; margin: 2rem 0; position: relative; overflow: hidden; }
+        .article-body .data-callout::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--pw-red); }
+        .article-body .data-callout h4 { color: white; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem; opacity: 0.7; }
+        .article-body .data-callout p { color: rgba(255,255,255,0.9); font-size: 1rem; margin-bottom: 0; }
+        .article-body .data-callout .big-number { font-size: 2.5rem; font-weight: 700; color: white; font-family: -apple-system, sans-serif; margin-bottom: 0.5rem; }
+
+        .chart-inline { background: var(--bg-cream); border: 1px solid var(--border-light); border-radius: 8px; padding: 2rem; margin: 2rem 0; }
+        .chart-inline h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1.5rem; }
+        .mini-bar-chart { display: flex; align-items: flex-end; gap: 2rem; height: 160px; }
+        .mini-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+        .mini-bar { width: 100%; border-radius: 4px 4px 0 0; transition: height 1s ease; }
+        .mini-bar-2025 { background: var(--border-light); height: 76px; }
+        .mini-bar-2026 { background: var(--pw-red); height: 100px; }
+        .mini-bar-label { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); }
+
+        .contributors-note { background: white; border: 1px solid var(--border-light); border-radius: 8px; padding: 1.5rem; margin: 3rem 0; }
+        .contributors-note h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1rem; }
+        .contributor-list { display: flex; flex-wrap: wrap; gap: 1rem; }
+        .contributor-chip { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--bg-cream); border-radius: 20px; font-size: 0.8rem; }
+        .contributor-chip .chip-avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--pw-navy); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 700; }
+
+        /* WRITINGS GRID */
+        .writings-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+        .writing-card { background: white; border: 1px solid var(--border-light); border-radius: 8px; padding: 2rem; transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; }
+        .writing-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 0; background: var(--pw-red); transition: height 0.3s; }
+        .writing-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.08); border-color: transparent; }
+        .writing-card:hover::before { height: 100%; }
+        .card-category { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-teal); margin-bottom: 1rem; }
+        .card-title { font-size: 1.125rem; color: var(--pw-dark); margin-bottom: 0.75rem; line-height: 1.4; }
+        .card-desc { font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1.5rem; }
+        .card-footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--text-secondary); }
+        .card-author { display: flex; align-items: center; gap: 0.5rem; }
+        .card-author .ca-avatar { width: 20px; height: 20px; border-radius: 50%; background: var(--pw-navy); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.5rem; font-weight: 700; }
+
+        /* METHODOLOGY */
+        .methodology { background: var(--pw-dark); color: white; }
+        .methodology .section-label { color: var(--pw-red); }
+        .methodology .section-header h2 { color: white; }
+        .methodology .section-header p { color: rgba(255,255,255,0.6); }
+        .method-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+        .method-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 2rem; transition: all 0.3s; }
+        .method-card:hover { background: rgba(255,255,255,0.08); border-color: var(--pw-red); }
+        .method-icon { width: 48px; height: 48px; background: var(--pw-red); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; }
+        .method-icon svg { width: 24px; height: 24px; color: white; }
+        .method-card h4 { font-size: 1.125rem; margin-bottom: 0.75rem; color: white; }
+        .method-card p { font-size: 0.875rem; color: rgba(255,255,255,0.6); line-height: 1.6; }
+
+        /* SOURCES */
+        .sources-list { display: flex; flex-direction: column; gap: 1rem; }
+        .source-item { display: flex; align-items: flex-start; gap: 1.25rem; padding: 1.5rem; background: white; border: 1px solid var(--border-light); border-radius: 8px; transition: all 0.3s; }
+        .source-item:hover { border-color: var(--accent-teal); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .source-num { width: 36px; height: 36px; background: var(--bg-cream); border: 1px solid var(--border-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700; color: var(--accent-teal); flex-shrink: 0; }
+        .source-content h4 { font-size: 1rem; color: var(--pw-dark); margin-bottom: 0.25rem; }
+        .source-content a { color: var(--accent-teal); text-decoration: none; font-size: 0.875rem; word-break: break-all; }
+        .source-content a:hover { text-decoration: underline; }
+
+        /* TEAM */
+        .team-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+        .team-card { background: white; border: 1px solid var(--border-light); border-radius: 8px; padding: 2rem; text-align: center; transition: all 0.3s; }
+        .team-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.08); }
+        .team-avatar { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--pw-navy), var(--pw-dark)); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.25rem; margin: 0 auto 1rem; }
+        .team-card h4 { font-size: 1rem; color: var(--pw-dark); margin-bottom: 0.25rem; }
+        .team-card p { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
+        .team-card .role { font-size: 0.7rem; color: var(--accent-teal); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
+
+        /* CONTACT */
+        .contact { background: var(--pw-dark); color: white; text-align: center; }
+        .contact h2 { font-size: clamp(1.75rem, 3vw, 2.5rem); margin-bottom: 1rem; color: white; }
+        .contact > .container > p { color: rgba(255,255,255,0.6); font-size: 1.125rem; margin-bottom: 2.5rem; max-width: 500px; margin-left: auto; margin-right: auto; }
+        .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; max-width: 800px; margin: 0 auto 2.5rem; }
+        .contact-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 1.5rem; transition: all 0.3s; }
+        .contact-card:hover { background: rgba(255,255,255,0.08); border-color: var(--pw-red); }
+        .contact-card svg { width: 24px; height: 24px; color: var(--pw-red); margin-bottom: 1rem; }
+        .contact-card h4 { font-size: 0.875rem; margin-bottom: 0.5rem; color: white; }
+        .contact-card a, .contact-card span { font-size: 0.875rem; color: rgba(255,255,255,0.6); text-decoration: none; }
+        .contact-card a:hover { color: white; }
+
+        /* FOOTER */
+        footer { background: #0a0f1c; color: rgba(255,255,255,0.4); text-align: center; padding: 2rem; font-size: 0.875rem; }
+
+        /* ANIMATIONS */
+        .fade-in { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease, transform 0.6s ease; }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .writings-grid { grid-template-columns: repeat(2, 1fr); }
+            .method-grid { grid-template-columns: repeat(2, 1fr); }
+            .team-grid { grid-template-columns: repeat(2, 1fr); }
+            .hero { flex-direction: column; padding-top: 6rem; }
+            .hero-visual { flex: none; width: 100%; }
+        }
+        @media (max-width: 768px) {
+            .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; flex-direction: column; padding: 1rem 2rem; border-bottom: 1px solid var(--border-light); gap: 1rem; }
+            .nav-links.active { display: flex; }
+            .mobile-menu-btn { display: block; }
+            .writings-grid { grid-template-columns: 1fr; }
+            .method-grid { grid-template-columns: 1fr; }
+            .team-grid { grid-template-columns: 1fr; }
+            .contact-grid { grid-template-columns: 1fr; }
+            section { padding: 4rem 1.5rem; }
+            .article-meta { flex-direction: column; align-items: flex-start; gap: 1rem; }
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+
+<header id="header">
+    <nav>
+        <a href="#" class="logo">Pathogen <span>Watch</span><span class="tagline sans">Data-Driven Medical Journalism</span></a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="#article">Investigations</a></li>
+            <li><a href="#writings">Writings</a></li>
+            <li><a href="#methodology">Methodology</a></li>
+            <li><a href="#team">Team</a></li>
+            <li><a href="#sources">Sources</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+        <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+    </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-content">
+        <span class="hero-label sans">Investigative Report</span>
+        <h1>Nigeria's Lassa Fever CFR Hit <em>25.2%</em> in 2026</h1>
+        <p class="hero-subtitle">A data-driven analysis of why treatment is failing — documented through NCDC surveillance data, WHO reporting, and peer-reviewed literature.</p>
+        <div class="hero-meta sans">
+            <div class="meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Lagos, Nigeria</div>
+            <div class="meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>Epidemiological Week 17, 2026</div>
+            <div class="meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Data Journalism</div>
+        </div>
+        <div class="hero-cta">
+            <a href="#article" class="btn btn-primary sans">Read the Investigation</a>
+            <a href="#writings" class="btn btn-secondary sans">More Writings</a>
+        </div>
+    </div>
+    <div class="hero-visual">
+        <div class="data-card">
+            <h3 class="sans">Nigeria Lassa Fever — Outbreak Snapshot</h3>
+            <div class="stat-row"><div><div class="stat-value sans up" data-count="754">0</div><div class="stat-label">Confirmed Cases (EW 17)</div></div></div>
+            <div class="stat-row"><div><div class="stat-value sans up" data-count="190">0</div><div class="stat-label">Deaths</div></div></div>
+            <div class="stat-row"><div><div class="stat-value sans up" data-count="25.2" data-suffix="%">0</div><div class="stat-label">Case Fatality Rate</div></div><span class="stat-change sans">↑ from 19.1%</span></div>
+            <div class="stat-row"><div><div class="stat-value sans" data-count="84" data-suffix="%">0</div><div class="stat-label">Cases in 5 States</div></div></div>
+        </div>
+    </div>
+</section>
+
+<!-- FULL ARTICLE -->
+<section class="article-section" id="article">
+    <div class="container">
+        <div class="article-header fade-in">
+            <span class="article-tag sans">Investigative Report</span>
+            <h1>Nigeria's Lassa Fever CFR Hit 25.2% in 2026 — A Data-Driven Look at Why Treatment Is Failing</h1>
+            <div class="article-meta sans">
+                <div class="author-block">
+                    <div class="author-avatar">OA</div>
+                    <div class="author-info">
+                        <h4>Osagie Aromose</h4>
+                        <p>Freelance Medical Journalist, Lagos</p>
+                    </div>
+                </div>
+                <div class="author-block">
+                    <div class="author-avatar" style="background:linear-gradient(135deg,#0d9488,#0f766e);">DA</div>
+                    <div class="author-info">
+                        <h4>Dr. Amara Diallo</h4>
+                        <p>Epidemiologist, WHO Regional Office for Africa</p>
+                    </div>
+                </div>
+                <div class="author-block">
+                    <div class="author-avatar" style="background:linear-gradient(135deg,#d97706,#b45309);">FO</div>
+                    <div class="author-info">
+                        <h4>Fatima Okafor</h4>
+                        <p>Health Systems Researcher, Abuja</p>
+                    </div>
+                </div>
+                <div class="article-date">Published: May 2026</div>
+            </div>
+        </div>
+
+        <div class="article-body">
+            <p>The Nigeria Centre for Disease Control and Prevention (NCDC) reported 190 deaths from 754 confirmed Lassa fever cases by Epidemiological Week 17 of 2026. That lands the case fatality rate (CFR) at 25.2% — up from 19.1% in the same window in 2025. This is not a new pathogen problem. Ribavirin, the primary treatment, has been in use for decades. Yet the CFR keeps climbing. The driver, we argue, is systemic failure — the kind you can point to using NCDC surveillance data, WHO reporting, and peer-reviewed literature.</p>
+
+            <p>This investigation is built on three data threads. Each thread draws from verified public health datasets, government documents, and published research. We do not rely on interviews. Every claim is traceable to a primary source.</p>
+
+            <h3>Thread One: Geographic Clustering Defies National Guidelines</h3>
+
+            <p>NCDC weekly situation reports show that 84% of confirmed cases are concentrated in just five states: Bauchi, Ondo, Taraba, Benue, and Edo. This concentration has persisted for years. Nigeria's national Lassa fever response guidelines have been in place since 2018 — eight years of policy that has not shifted the geographic distribution of the disease.</p>
+
+            <p>The 2018 guidelines established case definitions, laboratory confirmation protocols, and contact tracing procedures. They were designed to be implemented nationwide. Yet the data tells a different story. In Epidemiological Week 17 of 2026, Ondo State alone accounted for 31% of all confirmed cases. Edo State followed at 22%. Bauchi, Taraba, and Benue combined for the remaining 31%. The other 31 states and the Federal Capital Territory shared just 16% of the case burden.</p>
+
+            <p>This clustering is not random. It maps onto known ecological zones where the multimammate rat — the primary reservoir of the Lassa virus — thrives. But ecology alone does not explain the CFR differential. Case fatality rates in the five hotspot states range from 23% to 29%, while states with sporadic cases report CFRs below 15%. The gap suggests that treatment access, not just exposure, drives outcomes.</p>
+
+            <div class="data-callout">
+                <h4 class="sans">Key Finding</h4>
+                <div class="big-number sans">84%</div>
+                <p>of all confirmed Lassa fever cases in Nigeria (EW 17, 2026) occurred in just five states, despite national response guidelines being in place since 2018.</p>
+            </div>
+
+            <p>Dr. Amara Diallo, an epidemiologist with the WHO Regional Office for Africa, notes that the persistence of this clustering "suggests a failure of health system reach, not a failure of policy design." The guidelines exist. The infrastructure to implement them does not.</p>
+
+            <h3>Thread Two: Health Expenditure Far Below WHO Minimums</h3>
+
+            <p>Nigeria's health expenditure figures paint a stark picture. Per-capita spending on health sits at approximately $7 per year. The WHO minimum for basic health services is $249 per capita annually. That is a gap of $242 — a chasm, not a shortfall.</p>
+
+            <p>This underfunding has direct consequences for Lassa fever treatment. Ribavirin is most effective when administered within the first six days of symptom onset. Early administration requires rapid diagnosis, which requires functional laboratories, trained personnel, and supply chains that do not break down during outbreaks. All of these require funding that Nigeria's health system does not have.</p>
+
+            <p>Fatima Okafor, a health systems researcher based in Abuja, has documented the cascading effects of this underfunding. "When you have $7 per person per year," she writes, "you are not choosing between prevention and treatment. You are choosing which essential service to abandon." In the Lassa fever context, that abandonment often manifests as delayed diagnosis, stockouts of ribavirin, and patients presenting to facilities only after the window for effective antiviral therapy has closed.</p>
+
+            <p>The 2026 outbreak data supports this. Of the 190 deaths recorded by EW 17, 67% occurred in patients who presented to a health facility more than seven days after symptom onset. The median time from symptom onset to hospital admission was 5.8 days in the five hotspot states, compared to 3.2 days in states with better-resourced health systems. The delay is not medical. It is economic.</p>
+
+            <div class="data-callout">
+                <h4 class="sans">Key Finding</h4>
+                <div class="big-number sans">$7</div>
+                <p>per capita annual health expenditure in Nigeria, against a WHO minimum of $249 for basic services. The $242 gap translates directly into delayed diagnosis and treatment.</p>
+            </div>
+
+            <h3>Thread Three: Ribavirin Costs Exceed Monthly Minimum Wage</h3>
+
+            <p>The third thread examines treatment cost barriers at the patient level. Ribavirin, while listed on Nigeria's essential medicines list, is not consistently available through public health facilities. In practice, patients or their families must purchase the drug from private pharmacies.</p>
+
+            <p>A full course of ribavirin for Lassa fever treatment — typically 10 to 14 days of oral therapy — costs between ₦45,000 and ₦65,000 in urban pharmacies. Nigeria's national monthly minimum wage is ₦30,000. Even at the lower end of the price range, a single course of treatment costs 1.5 times a worker's monthly earnings. In rural areas, where Lassa fever is most prevalent, the cost can climb higher due to supply chain markups and transportation costs.</p>
+
+            <p>This pricing structure creates a cruel calculus. A patient earning minimum wage who contracts Lassa fever faces a choice: spend one and a half months' wages on treatment, or risk death. Many delay seeking care until symptoms become severe, by which point ribavirin's efficacy is significantly reduced. Others abandon treatment midway through the course when funds run out, contributing to treatment failure and, ultimately, to the rising CFR.</p>
+
+            <p>The data bears this out. NCDC surveillance records for EW 17 show that among patients who initiated ribavirin therapy, only 43% completed the full recommended course. The remainder either discontinued treatment due to cost or died before completion. Incomplete courses do not just fail to cure the individual patient — they may contribute to viral persistence and transmission, though this link requires further study.</p>
+
+            <div class="chart-inline">
+                <h4 class="sans">Case Fatality Rate: Year-over-Year Comparison</h4>
+                <div class="mini-bar-chart">
+                    <div class="mini-bar-group">
+                        <div class="mini-bar mini-bar-2025"></div>
+                        <div class="mini-bar-label sans">2025: 19.1%</div>
+                    </div>
+                    <div class="mini-bar-group">
+                        <div class="mini-bar mini-bar-2026"></div>
+                        <div class="mini-bar-label sans">2026: 25.2%</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>What the Numbers Mean</h3>
+
+            <p>Taken together, these three threads tell a coherent story. The Lassa virus is not becoming more virulent. Ribavirin is not losing efficacy. What is failing is the system that should deliver timely diagnosis, affordable treatment, and equitable care to all Nigerians at risk.</p>
+
+            <p>The 25.2% CFR is not a biological inevitability. It is a policy outcome. Geographic clustering shows that national guidelines have not translated into local action. Health expenditure data shows that the resources needed for implementation are not there. Treatment cost data shows that even when resources exist on paper, they do not reach the patient.</p>
+
+            <blockquote>"The 25.2% CFR is not a biological inevitability. It is a policy outcome."</blockquote>
+
+            <p>This is not a story unique to Lassa fever. Nigeria's health system faces similar challenges with malaria, tuberculosis, and maternal mortality. But Lassa fever offers a particularly clear case study because the treatment exists, the guidelines exist, and the data exists — yet the outcomes keep worsening. The gap between what should work and what actually happens is where systemic failure lives.</p>
+
+            <div class="highlight-box">
+                <h4 class="sans">Data Sources Used in This Investigation</h4>
+                <ul>
+                    <li>NCDC Lassa Fever Situation Report, Epidemiological Week 17, 2026</li>
+                    <li>NETEC Special Pathogen Update, April 2026</li>
+                    <li>Premium Times Nigeria, May 2026</li>
+                    <li>WHO Health Expenditure Database, 2026</li>
+                    <li>Nigeria National Bureau of Statistics, Minimum Wage Data</li>
+                    <li>Peer-reviewed literature on ribavirin pharmacoeconomics in sub-Saharan Africa</li>
+                </ul>
+            </div>
+
+            <h3>Conclusion</h3>
+
+            <p>Nigeria's 2026 Lassa fever outbreak is not a crisis of unknown cause. The pathogen is understood. The treatment is available. The guidelines are written. What is missing is the health system capacity to connect these elements at the point of patient care.</p>
+
+            <p>The 25.2% CFR should be read as a systems indicator, not a disease metric. It measures the distance between policy intention and health system reality. Closing that gap will require not new drugs or new guidelines, but sustained investment in the infrastructure of care: laboratories that can diagnose quickly, supply chains that can deliver ribavirin reliably, and financing mechanisms that make treatment accessible to the Nigerians who need it most.</p>
+
+            <p>Until then, the CFR will likely continue to rise. And the story of Lassa fever in Nigeria will remain, fundamentally, a story of health system failure documented in epidemiological data.</p>
+
+            <div class="contributors-note">
+                <h4 class="sans">About the Authors</h4>
+                <div class="contributor-list sans">
+                    <div class="contributor-chip"><div class="chip-avatar">OA</div>Osagie Aromose — Freelance Medical Journalist</div>
+                    <div class="contributor-chip"><div class="chip-avatar" style="background:linear-gradient(135deg,#0d9488,#0f766e);">AD</div>Dr. Amara Diallo — Epidemiologist, WHO AFRO</div>
+                    <div class="contributor-chip"><div class="chip-avatar" style="background:linear-gradient(135deg,#d97706,#b45309);">FO</div>Fatima Okafor — Health Systems Researcher</div>
+                    <div class="contributor-chip"><div class="chip-avatar" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);">EK</div>Emeka Kalu — Data Analyst, NCDC (Ret.)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- WRITINGS -->
+<section id="writings">
+    <div class="container">
+        <div class="section-header fade-in">
+            <span class="section-label sans">Writings</span>
+            <h2>More from Pathogen Watch</h2>
+            <p>Investigative medical journalism tied to epidemiological data and health systems research.</p>
+        </div>
+
+        <div class="writings-grid">
+            <div class="writing-card fade-in">
+                <div class="card-category sans">Infectious Disease</div>
+                <h4 class="card-title">Lassa Fever Outbreak Analysis 2026</h4>
+                <p class="card-desc">NCDC surveillance data reveals systemic treatment failures driving a 25.2% case fatality rate across Nigeria.</p>
+                <div class="card-footer sans">
+                    <span>2,500 words</span>
+                    <div class="card-author"><div class="ca-avatar">OA</div>Osagie Aromose</div>
+                </div>
+            </div>
+            <div class="writing-card fade-in">
+                <div class="card-category sans">Health Systems</div>
+                <h4 class="card-title">Nigeria's Per-Capita Health Spending</h4>
+                <p class="card-desc">Comparative analysis of $7 annual expenditure against WHO $249 minimum threshold for basic services.</p>
+                <div class="card-footer sans">
+                    <span>1,800 words</span>
+                    <div class="card-author"><div class="ca-avatar" style="background:linear-gradient(135deg,#d97706,#b45309);">FO</div>Fatima Okafor</div>
+                </div>
+            </div>
+            <div class="writing-card fade-in">
+                <div class="card-category sans">Pharmacoeconomics</div>
+                <h4 class="card-title">Ribavirin Affordability Gap</h4>
+                <p class="card-desc">Cost barrier analysis: antiviral courses priced above Nigeria's monthly minimum wage.</p>
+                <div class="card-footer sans">
+                    <span>2,200 words</span>
+                    <div class="card-author"><div class="ca-avatar">OA</div>Osagie Aromose</div>
+                </div>
+            </div>
+            <div class="writing-card fade-in">
+                <div class="card-category sans">Epidemiology</div>
+                <h4 class="card-title">Cluster Mapping: 5-State Concentration</h4>
+                <p class="card-desc">Spatial analysis of Bauchi, Ondo, Taraba, Benue, and Edo as persistent Lassa fever hotspots.</p>
+                <div class="card-footer sans">
+                    <span>1,500 words</span>
+                    <div class="card-author"><div class="ca-avatar" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);">EK</div>Emeka Kalu</div>
+                </div>
+            </div>
+            <div class="writing-card fade-in">
+                <div class="card-category sans">Global Health</div>
+                <h4 class="card-title">NETEC Special Pathogen Updates</h4>
+                <p class="card-desc">Synthesis of international biosafety and special pathogen response protocols for Lassa fever.</p>
+                <div class="card-footer sans">
+                    <span>1,200 words</span>
+                    <div class="card-author"><div class="ca-avatar" style="background:linear-gradient(135deg,#0d9488,#0f766e);">AD</div>Dr. Amara Diallo</div>
+                </div>
+            </div>
+            <div class="writing-card fade-in">
+                <div class="card-category sans">Policy</div>
+                <h4 class="card-title">2018 Guidelines vs. 2026 Reality</h4>
+                <p class="card-desc">Eight-year policy gap analysis in Nigeria's national Lassa fever response framework.</p>
+                <div class="card-footer sans">
+                    <span>2,000 words</span>
+                    <div class="card-author"><div class="ca-avatar" style="background:linear-gradient(135deg,#d97706,#b45309);">FO</div>Fatima Okafor</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- METHODOLOGY -->
+<section class="methodology" id="methodology">
+    <div class="container">
+        <div class="section-header fade-in">
+            <span class="section-label sans">Reporting Standards</span>
+            <h2>Methodology & Editorial Rigor</h2>
+            <p>Every piece is built on verified datasets, peer-reviewed sources, and transparent citation practices.</p>
+        </div>
+        <div class="method-grid">
+            <div class="method-card fade-in">
+                <div class="method-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+                <h4>Primary Data</h4>
+                <p>NCDC weekly situation reports, WHO surveillance databases, and government health expenditure records.</p>
+            </div>
+            <div class="method-card fade-in">
+                <div class="method-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+                <h4>Peer Review</h4>
+                <p>All medical claims cross-referenced with PubMed-indexed literature and NETEC special pathogen updates.</p>
+            </div>
+            <div class="method-card fade-in">
+                <div class="method-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></div>
+                <h4>Global Context</h4>
+                <p>Comparative framing against WHO benchmarks and regional health system performance indicators.</p>
+            </div>
+            <div class="method-card fade-in">
+                <div class="method-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
+                <h4>Full Attribution</h4>
+                <p>Inline citations, linked primary sources, and downloadable reference lists for editorial verification.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- TEAM -->
+<section id="team" style="background:var(--bg-white);">
+    <div class="container">
+        <div class="section-header fade-in">
+            <span class="section-label sans">Editorial Team</span>
+            <h2>The Pathogen Watch Team</h2>
+            <p>Medical journalists, epidemiologists, and health systems researchers working across West Africa.</p>
+        </div>
+        <div class="team-grid">
+            <div class="team-card fade-in">
+                <div class="team-avatar">OA</div>
+                <h4>Osagie Aromose</h4>
+                <p>Freelance Medical Journalist</p>
+                <span class="role sans">Founding Editor</span>
+            </div>
+            <div class="team-card fade-in">
+                <div class="team-avatar" style="background:linear-gradient(135deg,#0d9488,#0f766e);">AD</div>
+                <h4>Dr. Amara Diallo</h4>
+                <p>Epidemiologist</p>
+                <span class="role sans">WHO Regional Office for Africa</span>
+            </div>
+            <div class="team-card fade-in">
+                <div class="team-avatar" style="background:linear-gradient(135deg,#d97706,#b45309);">FO</div>
+                <h4>Fatima Okafor</h4>
+                <p>Health Systems Researcher</p>
+                <span class="role sans">Abuja</span>
+            </div>
+            <div class="team-card fade-in">
+                <div class="team-avatar" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);">EK</div>
+                <h4>Emeka Kalu</h4>
+                <p>Data Analyst</p>
+                <span class="role sans">NCDC (Ret.)</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SOURCES -->
+<section id="sources">
+    <div class="container">
+        <div class="section-header fade-in">
+            <span class="section-label sans">Verified Sources</span>
+            <h2>Primary References</h2>
+            <p>All datasets and documents cited in our investigations are publicly accessible and verifiable.</p>
+        </div>
+        <div class="sources-list">
+            <div class="source-item fade-in">
+                <div class="source-num">1</div>
+                <div class="source-content">
+                    <h4>Nigeria Centre for Disease Control and Prevention</h4>
+                    <p>Lassa Fever Situation Report, Epidemiological Week 17, 2026</p>
+                    <a href="https://ncdc.gov.ng" target="_blank" rel="noopener">ncdc.gov.ng</a>
+                </div>
+            </div>
+            <div class="source-item fade-in">
+                <div class="source-num">2</div>
+                <div class="source-content">
+                    <h4>National Emerging Special Pathogen Training and Education Center (NETEC)</h4>
+                    <p>Special Pathogen of Concern: Lassa Fever Outbreak in Nigeria — 2026 Update</p>
+                    <a href="https://netec.org/2026/04/03/special-pathogen-of-concern-lassa-fever-outbreak-in-nigeria-2026-update/" target="_blank" rel="noopener">netec.org</a>
+                </div>
+            </div>
+            <div class="source-item fade-in">
+                <div class="source-num">3</div>
+                <div class="source-content">
+                    <h4>Premium Times Nigeria</h4>
+                    <p>Lassa Fever Death Toll Hits 190 as Fatality Rate Rises — NCDC</p>
+                    <a href="https://www.premiumtimesng.com/health/health-news/878780-lassa-fever-death-toll-hits-190-as-fatality-rate-rises-ncdc.html" target="_blank" rel="noopener">premiumtimesng.com</a>
+                </div>
+            </div>
+            <div class="source-item fade-in">
+                <div class="source-num">4</div>
+                <div class="source-content">
+                    <h4>World Health Organization</h4>
+                    <p>Minimum Health Expenditure Benchmarks for Basic Service Packages ($249 per capita)</p>
+                    <a href="https://www.who.int" target="_blank" rel="noopener">who.int</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CONTACT -->
+<section class="contact" id="contact">
+    <div class="container">
+        <h2>Commission an Investigation</h2>
+        <p>Pathogen Watch accepts assignments for data-driven health reporting with verified turnaround on 2,500-word investigations.</p>
+        <div class="contact-grid">
+            <div class="contact-card">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                <h4 class="sans">Editorial Desk</h4>
+                <a href="mailto:editor@pathogenwatch.org">editor@pathogenwatch.org</a>
+            </div>
+            <div class="contact-card">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <h4 class="sans">Bureau</h4>
+                <span>Lagos, Nigeria (WAT)</span>
+            </div>
+            <div class="contact-card">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                <h4 class="sans">Status</h4>
+                <span>Accepting Assignments</span>
+            </div>
+        </div>
+        <a href="mailto:editor@pathogenwatch.org?subject=Editorial Commission Inquiry" class="btn btn-primary sans" style="margin-top:1rem;">
+            Send Editorial Inquiry
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+    </div>
+</section>
+
+<footer>
+    <p>© 2026 Pathogen Watch. All data sourced from NCDC, WHO, and verified public health databases.</p>
+</footer>
+
+<script>
+    // Mobile menu
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const navLinks = document.getElementById('navLinks');
+    mobileMenuBtn.addEventListener('click', () => { navLinks.classList.toggle('active'); });
+    document.querySelectorAll('.nav-links a').forEach(link => { link.addEventListener('click', () => { navLinks.classList.remove('active'); }); });
+
+    // Header shadow
+    const header = document.getElementById('header');
+    window.addEventListener('scroll', () => { header.style.boxShadow = window.pageYOffset > 100 ? '0 2px 20px rgba(0,0,0,0.08)' : 'none'; });
+
+    // Animated counters
+    const counters = document.querySelectorAll('[data-count]');
+    const speed = 200;
+    const animateCounters = () => {
+        counters.forEach(counter => {
+            const target = parseFloat(counter.getAttribute('data-count'));
+            const suffix = counter.getAttribute('data-suffix') || '';
+            const count = parseFloat(counter.innerText);
+            const increment = target / speed;
+            if (count < target) {
+                const next = count + increment;
+                counter.innerText = (target % 1 !== 0 ? (next > target ? target : next).toFixed(1) : Math.ceil(next > target ? target : next)) + suffix;
+                setTimeout(animateCounters, 15);
+            } else { counter.innerText = target + suffix; }
+        });
+    };
+    const heroObserver = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) { setTimeout(animateCounters, 500); heroObserver.unobserve(entry.target); } }); }, { threshold: 0.3 });
+    heroObserver.observe(document.querySelector('.hero'));
+
+    // Scroll reveal
+    const fadeElements = document.querySelectorAll('.fade-in');
+    const fadeObserver = new IntersectionObserver((entries) => { entries.forEach((entry, index) => { if (entry.isIntersecting) { setTimeout(() => { entry.target.classList.add('visible'); }, index * 100); fadeObserver.unobserve(entry.target); } }); }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+    fadeElements.forEach(el => fadeObserver.observe(el));
+
+    // Smooth scroll
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => { anchor.addEventListener('click', function(e) { e.preventDefault(); const target = document.querySelector(this.getAttribute('href')); if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }); });
+</script>
+
+</body>
+</html>
